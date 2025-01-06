@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="gangiChi.MainPage">
+
+    <ScrollView>
+
+        <VerticalStackLayout VerticalOptions="CenterAndExpand" Spacing="10" Grid.Row="1" x:Name="createConnections" Padding="10">
+
+            <Label Text="sELECT CONNECTION" Style="{StaticResource SubHeadline}" />
+            <ActivityIndicator x:Name="loader" IsVisible="False" IsRunning="False" Color="OrangeRed"/>
+            <Label x:Name="loaderText" HorizontalTextAlignment="Center" TextColor="Orange" TextTransform="Uppercase"/>
+            <Label/>
+            <Entry Placeholder="Enter IP Address" x:Name="servingFromPort" Text="5000"/>
+            <Button Text="Create new connection" x:Name="creatingConnection_Click" Clicked="Server_Connect_Click" HorizontalOptions="Fill" />
+            
+            <Label/>
+            <Label/>
+
+            <Grid ColumnDefinitions="*,auto,auto">
+                <Entry Grid.Column="0" Placeholder="Enter IP Address" x:Name="connectToIpAddress" Text="192.168.0.185"/>
+                <Label Grid.Column="1" Text=":" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
+                <Entry Grid.Column="2" Placeholder="Enter Port" x:Name="connectToPort" Text="5000"/>
+            </Grid>
+            <Button Text="Join existing connection" x:Name="client_click_btn" Clicked="Client_Connect_Click" HorizontalOptions="Fill" />
+        </VerticalStackLayout>
+
+    </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,25 @@
+{
+  "name": "gangiChi",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "jdkDistro": "ms"
+    }
+  },
+  "containerEnv": {
+    "ANDROID_HOME": "/home/vscode/android-sdk",
+    "ANDROID_SDK_ROOT": "/home/vscode/android-sdk"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.dotnet-maui"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

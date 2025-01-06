@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="gangiChi.Messages"
+             xmlns:local="clr-namespace:gangiChi"
+           
+             Title="Messages">
+
+
+
+    <Grid RowDefinitions="*,auto" Padding="10">
+        <CollectionView BackgroundColor="DimGrey" Grid.Row="0" x:Name="listerbox" VerticalOptions="FillAndExpand"
+                VerticalScrollBarVisibility="Always"
+                HorizontalScrollBarVisibility="Never">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Padding="7">
+                        <StackLayout BackgroundColor="{Binding BgColor}" Padding="6">
+                            <Label Text="{Binding Textstr}"/>
+                            <Label Text="{Binding Imagestr}"/>
+                            <Image Source="{Binding Imagestr}" IsVisible="{Binding Imagevisible}"  >
+                                <Image.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="Image_MouseLeftButtonDown" CommandParameter="{Binding .}"/>
+                                </Image.GestureRecognizers>
+                            </Image>
+                        </StackLayout>
+                        <BoxView BackgroundColor="Orange" HeightRequest="2"/>
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Grid Grid.Row="1" RowSpacing="110">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Entry Grid.Column="0" Background="PaleVioletRed" Text="" x:Name="texttosend"/>
+            <Button  Grid.Column="1" Padding="30,10" Clicked="Sendmessages_Clicked" Text="Send" TextColor="White"/>
+            <Button  Grid.Column="2" Clicked="Hide_btn_Clicked" Text="Hide" x:Name="hide" BackgroundColor="Black" TextColor="Red"/> 
+        </Grid>
+    </Grid>
+</ContentPage>

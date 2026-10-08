@@ -14,16 +14,18 @@ namespace gangiChi
             public string? Imagestr { get; set; } = "";
             public bool Imagevisible { get; set; } = false;
             public Color BgColor { get; set; } = Colors.MediumVioletRed;
+            // "Sent", "Received" or "System" - drives bubble alignment and colors in Message.xaml
+            public string Kind { get; set; } = "System";
             public static Vuvu AddTo(string text, string from)
             {
                 if (text.Trim().EndsWith(".png", StringComparison.CurrentCultureIgnoreCase))
                 {
                     //image
-                    return new Vuvu { Textstr = from + ": download image", Imagestr = text, Imagevisible = true, BgColor = Colors.MediumPurple };
+                    return new Vuvu { Textstr = "Tap image to download", Imagestr = text, Imagevisible = true, Kind = from };
                 }
                 else
                 {   //text
-                    return (new Vuvu { Textstr = from + ": " + text });
+                    return (new Vuvu { Textstr = text, Kind = from });
                 }
             }
         }

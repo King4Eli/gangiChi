@@ -1,0 +1,105 @@
+{
+  "format": 1,
+  "restore": {
+    "/workspaces/gangiChi/gangiChi/gangiChi.csproj": {}
+  },
+  "projects": {
+    "/workspaces/gangiChi/gangiChi/gangiChi.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/workspaces/gangiChi/gangiChi/gangiChi.csproj",
+        "projectName": "gangiChi",
+        "projectPath": "/workspaces/gangiChi/gangiChi/gangiChi.csproj",
+        "packagesPath": "/home/vscode/.nuget/packages/",
+        "outputPath": "/workspaces/gangiChi/gangiChi/obj/",
+        "projectStyle": "PackageReference",
+        "crossTargeting": true,
+        "configFilePaths": [
+          "/home/vscode/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0-android"
+        ],
+        "sources": {
+          "/usr/share/dotnet/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0-android34.0": {
+            "targetAlias": "net8.0-android",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0-android34.0": {
+          "targetAlias": "net8.0-android",
+          "dependencies": {
+            "Microsoft.Extensions.Logging.Debug": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
+            "Microsoft.Maui.Controls": {
+              "target": "Package",
+              "version": "[8.0.100, )"
+            },
+            "Microsoft.Maui.Controls.Compatibility": {
+              "target": "Package",
+              "version": "[8.0.100, )"
+            },
+            "Microsoft.NET.ILLink.Tasks": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.21, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.Android": {
+              "privateAssets": "all"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.415/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "android-arm": {
+          "#import": []
+        },
+        "android-arm64": {
+          "#import": []
+        },
+        "android-x64": {
+          "#import": []
+        },
+        "android-x86": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

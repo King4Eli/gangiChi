@@ -11,4 +11,4 @@ dotnet build gangiChi/gangiChi.csproj -t:InstallAndroidDependencies \
   -p:JavaSdkDirectory="$JAVA_HOME" \
   -p:AcceptAndroidSDKLicenses=True
 
-dotnet restore gangiChi/gangiChi.csproj -p:TargetFrameworks=net8.0-android
+dotnet restore gangiChi/gangiChi.csproj

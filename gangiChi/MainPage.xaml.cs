@@ -28,6 +28,7 @@ namespace gangiChi
         }
         void IsLoader(bool g, View?[] viewToNotDisplay, string hg = "")
         {
+            connectionStatus.IsVisible = g;
             loader.IsVisible = g;
             loader.IsRunning = g;
             loaderText.Text = hg;
@@ -53,11 +54,18 @@ namespace gangiChi
         {
             InitializeComponent();
 
-            this.Title = "Windows AntiVirus";
+            this.Title = "gangiChi";
             Initt();
         }
         private async void Server_Connect_Click(object sender, EventArgs e)
         {
+
+            if (!int.TryParse(servingFromPort.Text?.Trim(), out int serverPort) || serverPort is < 1 or > 65535)
+            {
+                await DisplayAlert("Invalid port", "Enter a port number between 1 and 65535.", "OK");
+                servingFromPort.Focus();
+                return;
+            }
 
             ServerLocalIP = GetLocalIPAddress();
 
@@ -74,14 +82,14 @@ namespace gangiChi
                 G.Initiate_server?.CloseConnection();
                 G.Initiate_server = new()
                 {
-                    Tcp_server = new(IPAddress.Parse(ServerLocalIP), int.Parse(servingFromPort.Text.Trim()))
+                    Tcp_server = new(IPAddress.Parse(ServerLocalIP), serverPort)
                 };
                 G.Initiate_server.Tcp_server?.Start();
 
                 Application.Current?.Dispatcher.Dispatch(  () =>
                 {
                     // loading .....
-                    IsLoader(true, [creatingConnection_Click, client_click_btn], "Server started.\nWaiting for connection..." + ServerLocalIP+":"+servingFromPort.Text);
+                    IsLoader(true, [creatingConnection_Click, client_click_btn], "Waiting for a device at " + ServerLocalIP + ":" + serverPort);
                 });
                 while (true)
                 {
@@ -123,16 +131,24 @@ namespace gangiChi
                     }
                 }
             });
-            //0
-            IsLoader(false, [creatingConnection_Click, client_click_btn], "waiting for client on\n");
-
-
-
         }
     
         private async void Client_Connect_Click(object sender, EventArgs e)
         { 
-            IsLoader(true, [creatingConnection_Click, client_click_btn], "waiting for client on\n");
+            if (string.IsNullOrWhiteSpace(connectToIpAddress.Text))
+            {
+                await DisplayAlert("IP address required", "Enter the host device’s local IP address.", "OK");
+                connectToIpAddress.Focus();
+                return;
+            }
+            if (!int.TryParse(connectToPort.Text?.Trim(), out int clientPort) || clientPort is < 1 or > 65535)
+            {
+                await DisplayAlert("Invalid port", "Enter a port number between 1 and 65535.", "OK");
+                connectToPort.Focus();
+                return;
+            }
+
+            IsLoader(true, [creatingConnection_Click, client_click_btn], "Connecting to " + connectToIpAddress.Text.Trim() + ":" + clientPort + "…");
 
             try
             { 
@@ -141,7 +157,7 @@ namespace gangiChi
                 {
 
                     //Tcp_client = new TcpClient("192.168.0.185", 5000)
-                    Tcp_client = new TcpClient(connectToIpAddress.Text.Trim(), int.Parse(connectToPort.Text.Trim()))
+                    Tcp_client = new TcpClient(connectToIpAddress.Text.Trim(), clientPort)
                 };
 
 

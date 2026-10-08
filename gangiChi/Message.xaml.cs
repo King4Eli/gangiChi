@@ -1,4 +1,4 @@
- 
+﻿ 
 using System.Runtime.InteropServices; 
 using toolsHelper; 
 
@@ -10,17 +10,18 @@ public partial class Messages : ContentPage
     {
         InitializeComponent();
 
-        G.ObservableCollection_Messages.Add(new G.Vuvu { Textstr = "Connected......." });
+        G.ObservableCollection_Messages.Add(new G.Vuvu { Textstr = "Connected", Kind = "System" });
         listerbox.ItemsSource = G.ObservableCollection_Messages;
         Task.Run(() =>
         {
             G.Initiate_server?.ReceiveMessages((cu) =>
             {   
                 var recii = G.Vuvu.AddTo(cu, "Received");
-                G.ObservableCollection_Messages.Add(recii);
                 try { if (recii.Imagevisible) { B.DownloadShare(recii.Imagestr); } } catch (Exception c) {_=c; }
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
+                    // collection is bound to the UI, so it must change on the main thread (WinUI throws otherwise)
+                    G.ObservableCollection_Messages.Add(recii);
                     listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
                 });
             });
@@ -38,10 +39,11 @@ public partial class Messages : ContentPage
 
     private void Sendmessages_Clicked(object sender, EventArgs e)
     {
-        if(texttosend.Text != "")
+        if(!string.IsNullOrWhiteSpace(texttosend.Text))
         {
             G.Initiate_server?.SendMessage(texttosend.Text);
             texttosend.Text="";
+            listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
         }
     }
 

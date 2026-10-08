@@ -1,30 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="gangiChi.MainPage">
+             x:Class="gangiChi.MainPage"
+             Title="gangiChi">
 
     <ScrollView>
+        <VerticalStackLayout x:Name="createConnections" Padding="{OnIdiom Phone='16,20', Default='32,40'}" Spacing="20"
+                             HorizontalOptions="Center" MaximumWidthRequest="1000">
+            <VerticalStackLayout Spacing="6" Margin="0,0,0,8">
+                <Label Text="Connect with gangiChi" FontSize="{OnIdiom Phone=24, Default=30}" FontAttributes="Bold" />
+                <Label Text="Create a room on this device or join one on your local network."
+                       FontSize="15" TextColor="{AppThemeBinding Light=#667085, Dark=#A9B1BF}" />
+            </VerticalStackLayout>
 
-        <VerticalStackLayout VerticalOptions="CenterAndExpand" Spacing="10" Grid.Row="1" x:Name="createConnections" Padding="10">
+            <Grid ColumnDefinitions="{OnIdiom Phone='*', Tablet='*,*', Desktop='*,*'}"
+                  RowDefinitions="{OnIdiom Phone='Auto,Auto', Tablet='Auto', Desktop='Auto'}"
+                  RowSpacing="14" ColumnSpacing="18" x:Name="connectionOptions">
+                <Border Grid.Row="0" Grid.Column="0" Padding="20" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E4E7EC, Dark=#344054}"
+                        StrokeShape="RoundRectangle 16" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1D2939}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Host a connection" FontSize="20" FontAttributes="Bold" />
+                        <Label Text="Choose the port your device will listen on. Share your local IP address with the other device."
+                               FontSize="14" TextColor="{AppThemeBinding Light=#667085, Dark=#A9B1BF}" />
+                        <Entry Placeholder="Port" x:Name="servingFromPort" Text="5000" Keyboard="Numeric"
+                               MaxLength="5" ReturnType="Done" ClearButtonVisibility="WhileEditing" />
+                        <Button Text="Create connection" x:Name="creatingConnection_Click" Clicked="Server_Connect_Click"
+                                HorizontalOptions="Fill" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <Label Text="sELECT CONNECTION" Style="{StaticResource SubHeadline}" />
-            <ActivityIndicator x:Name="loader" IsVisible="False" IsRunning="False" Color="OrangeRed"/>
-            <Label x:Name="loaderText" HorizontalTextAlignment="Center" TextColor="Orange" TextTransform="Uppercase"/>
-            <Label/>
-            <Entry Placeholder="Enter IP Address" x:Name="servingFromPort" Text="5000"/>
-            <Button Text="Create new connection" x:Name="creatingConnection_Click" Clicked="Server_Connect_Click" HorizontalOptions="Fill" />
-            
-            <Label/>
-            <Label/>
-
-            <Grid ColumnDefinitions="*,auto,auto">
-                <Entry Grid.Column="0" Placeholder="Enter IP Address" x:Name="connectToIpAddress" Text="192.168.0.185"/>
-                <Label Grid.Column="1" Text=":" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
-                <Entry Grid.Column="2" Placeholder="Enter Port" x:Name="connectToPort" Text="5000"/>
+                <Border Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Padding="20" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E4E7EC, Dark=#344054}"
+                        StrokeShape="RoundRectangle 16" BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1D2939}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Join a connection" FontSize="20" FontAttributes="Bold" />
+                        <Label Text="Enter the host device’s local IP address and port. Both devices must be on the same network."
+                               FontSize="14" TextColor="{AppThemeBinding Light=#667085, Dark=#A9B1BF}" />
+                        <Grid ColumnDefinitions="*,Auto,100" ColumnSpacing="8">
+                            <Entry Grid.Column="0" Placeholder="IP address" x:Name="connectToIpAddress"
+                                   Keyboard="Url" ReturnType="Next" ClearButtonVisibility="WhileEditing" />
+                            <Label Grid.Column="1" Text=":" VerticalTextAlignment="Center" FontSize="18" />
+                            <Entry Grid.Column="2" Placeholder="Port" x:Name="connectToPort" Text="5000"
+                                   Keyboard="Numeric" MaxLength="5" ReturnType="Done" />
+                        </Grid>
+                        <Button Text="Join connection" x:Name="client_click_btn" Clicked="Client_Connect_Click"
+                                HorizontalOptions="Fill" />
+                    </VerticalStackLayout>
+                </Border>
             </Grid>
-            <Button Text="Join existing connection" x:Name="client_click_btn" Clicked="Client_Connect_Click" HorizontalOptions="Fill" />
+
+            <VerticalStackLayout Spacing="8" HorizontalOptions="Center" IsVisible="False" x:Name="connectionStatus">
+                <ActivityIndicator x:Name="loader" IsVisible="False" IsRunning="False" Color="{StaticResource Primary}" />
+                <Label x:Name="loaderText" HorizontalTextAlignment="Center" HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#475467, Dark=#D0D5DD}" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
-
     </ScrollView>
-
 </ContentPage>

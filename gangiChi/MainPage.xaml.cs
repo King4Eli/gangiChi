@@ -10,6 +10,8 @@ namespace gangiChi
     public partial class MainPage : ContentPage
     {
         string? ServerLocalIP;
+        bool _isHosting;
+        IDispatcherTimer? _connectionWatcher;
 #if WINDOWS
         H.GlobalKeyboardHook Keyboard_Hook = new();
 #endif
@@ -36,6 +38,78 @@ namespace gangiChi
             {
                 if (item != null) item.IsVisible = !g;
             }
+        }
+
+        // Enter the host "waiting for a device" state: show the Cancel button and
+        // begin periodically checking for an open connection.
+        void StartHosting()
+        {
+            _isHosting = true;
+            cancelHosting_Click.IsVisible = true;
+            connectionList.IsVisible = true;
+
+            _connectionWatcher?.Stop();
+            _connectionWatcher = Dispatcher.CreateTimer();
+            _connectionWatcher.Interval = TimeSpan.FromSeconds(2);
+            _connectionWatcher.Tick += (_, _) => RefreshConnectionList();
+            _connectionWatcher.Start();
+            RefreshConnectionList();
+        }
+
+        // Leave the host state and reset the form.
+        void StopHosting()
+        {
+            _isHosting = false;
+            _connectionWatcher?.Stop();
+            _connectionWatcher = null;
+            cancelHosting_Click.IsVisible = false;
+            connectionList.IsVisible = false;
+            connectionList.Clear();
+            IsLoader(false, [creatingConnection_Click, client_click_btn]);
+        }
+
+        // Periodic check: show the current connection (if any) with a close (X) control,
+        // otherwise keep showing the "waiting" state.
+        void RefreshConnectionList()
+        {
+            if (!_isHosting) return;
+
+            var server = G.Initiate_server;
+            bool hasOpenConnection = server?.Stream != null;
+
+            connectionList.Clear();
+            if (!hasOpenConnection) return;
+
+            var row = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
+            var label = new Label
+            {
+                Text = "Connected",
+                VerticalTextAlignment = TextAlignment.Center
+            };
+            var close = new Button
+            {
+                Text = "✕",
+                BackgroundColor = Colors.Transparent,
+                TextColor = (Application.Current?.Resources.TryGetValue("Primary", out var p) == true ? (Color)p : Colors.MediumVioletRed),
+                Padding = 0,
+                WidthRequest = 40
+            };
+            close.Clicked += (_, _) =>
+            {
+                server?.CloseConnection();
+                RefreshConnectionList();
+            };
+            row.Add(label, 0, 0);
+            row.Add(close, 1, 0);
+            connectionList.Add(row);
+        }
+
+        // Cancel the host "waiting for a device" state.
+        private void CancelHosting_Click(object sender, EventArgs e)
+        {
+            // Stopping the listener makes the blocking AcceptTcpClient throw, ending the accept loop.
+            G.Initiate_server?.CloseConnection();
+            StopHosting();
         }
 
 
@@ -84,17 +158,40 @@ namespace gangiChi
                 {
                     Tcp_server = new(IPAddress.Parse(ServerLocalIP), serverPort)
                 };
-                G.Initiate_server.Tcp_server?.Start();
+                var thisListener = G.Initiate_server.Tcp_server;
+                thisListener?.Start();
 
                 Application.Current?.Dispatcher.Dispatch(  () =>
                 {
                     // loading .....
                     IsLoader(true, [creatingConnection_Click, client_click_btn], "Waiting for a device at " + ServerLocalIP + ":" + serverPort);
+                    StartHosting();
                 });
                 while (true)
                 {
                     //client is connected
-                    TcpClient? Tcp_client = G.Initiate_server?.Tcp_server?.AcceptTcpClient();
+                    TcpClient? Tcp_client;
+                    try
+                    {
+                        Tcp_client = thisListener?.AcceptTcpClient();
+                    }
+                    catch (SocketException)
+                    {
+                        // listener was stopped (hosting cancelled) – leave the accept loop
+                        break;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        break;
+                    }
+
+                    // if hosting was cancelled while we were waiting, stop here
+                    if (!_isHosting || G.Initiate_server == null || !ReferenceEquals(G.Initiate_server.Tcp_server, thisListener))
+                    {
+                        Tcp_client?.Close();
+                        break;
+                    }
+
                     if (G.Initiate_server != null)
                     {
                         string desktopScreenShotFolderN = DesktopScreenShotFolder();

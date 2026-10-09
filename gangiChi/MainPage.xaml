@@ -52,6 +52,14 @@
                 <ActivityIndicator x:Name="loader" IsVisible="False" IsRunning="False" Color="{StaticResource Primary}" />
                 <Label x:Name="loaderText" HorizontalTextAlignment="Center" HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light=#475467, Dark=#D0D5DD}" />
+
+                <!-- Open / pending connections for this host, refreshed periodically -->
+                <VerticalStackLayout x:Name="connectionList" Spacing="6" IsVisible="False" Margin="0,6,0,0" />
+
+                <!-- Cancel the host's "waiting for a device" state -->
+                <Button x:Name="cancelHosting_Click" Text="Cancel" IsVisible="False"
+                        Clicked="CancelHosting_Click" HorizontalOptions="Center"
+                        BackgroundColor="Transparent" TextColor="{StaticResource Primary}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

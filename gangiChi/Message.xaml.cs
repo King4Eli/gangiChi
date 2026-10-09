@@ -5,7 +5,9 @@ using toolsHelper;
 
 namespace gangiChi;
 public partial class Messages : ContentPage
-{ 
+{
+    bool _closed;
+
     public Messages()
     {
         InitializeComponent();
@@ -15,18 +17,40 @@ public partial class Messages : ContentPage
         Task.Run(() =>
         {
             G.Initiate_server?.ReceiveMessages((cu) =>
-            {   
+            {
                 var recii = G.Vuvu.AddTo(cu, "Received");
                 try { if (recii.Imagevisible) { B.DownloadShare(recii.Imagestr); } } catch (Exception c) {_=c; }
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    // collection is bound to the UI, so it must change on the main thread (WinUI throws otherwise)
-                    G.ObservableCollection_Messages.Add(recii);
-                    listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
+                    try
+                    {
+                        // collection is bound to the UI, so it must change on the main thread (WinUI throws otherwise)
+                        G.ObservableCollection_Messages.Add(recii);
+                        listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
+                    }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
                 });
-            });
+            },
+            // the connection ended (remote closed or dropped) → return home safely
+            onClosed: HandleDisconnected);
         });
+    }
 
+    // Close the connection and go back to the home page, at most once, without crashing.
+    void HandleDisconnected()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            if (_closed) return;
+            _closed = true;
+            try { G.Initiate_server?.CloseConnection(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+            try
+            {
+                if (Navigation.NavigationStack.Count > 1)
+                    await Navigation.PopToRootAsync();
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+        });
     }
 
     private void Image_MouseLeftButtonDown(object sender, TappedEventArgs e)
@@ -39,12 +63,22 @@ public partial class Messages : ContentPage
 
     private void Sendmessages_Clicked(object sender, EventArgs e)
     {
-        if(!string.IsNullOrWhiteSpace(texttosend.Text))
+        try
         {
-            G.Initiate_server?.SendMessage(texttosend.Text);
-            texttosend.Text="";
-            listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
+            if (!string.IsNullOrWhiteSpace(texttosend.Text))
+            {
+                bool ok = G.Initiate_server?.SendMessage(texttosend.Text) ?? false;
+                texttosend.Text = "";
+                if (!ok)
+                {
+                    // send failed → the connection is broken, head home
+                    HandleDisconnected();
+                    return;
+                }
+                listerbox.ScrollTo(G.ObservableCollection_Messages.Count - 1, position: ScrollToPosition.End, animate: true);
+            }
         }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
     }
 
 

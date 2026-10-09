@@ -37,67 +37,61 @@ namespace gangiChi
             public TcpClient? Tcp_client { get; set; }
             public NetworkStream? Stream { get; set; }
 
-            public void ReceiveMessages(Action<string> funck)
+            // Reads until the remote end closes or errors. onClosed is always called
+            // exactly once when the connection ends, so the UI can return home.
+            public void ReceiveMessages(Action<string> funck, Action? onClosed = null)
             {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
-                if (Stream == null) return;
+                if (Stream == null) { SafeInvoke(onClosed); return; }
                 try
                 {
-                    while ((bytesRead = Stream.Read(buffer, 0, buffer.Length)) > 0)
+                    while (Stream != null && (bytesRead = Stream.Read(buffer, 0, buffer.Length)) > 0)
                     {
                         string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         Debug.WriteLine(receivedMessage);
-                        funck(receivedMessage);
+                        try { funck(receivedMessage); } catch (Exception ex) { Debug.WriteLine(ex); }
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (Tcp_client != null)
-                    {
-                        Application.Current?.Dispatcher.Dispatch(async () =>
-                        {
-                            var currentPage = Application.Current?.Windows[0].Page;
-                            if (currentPage != null) await currentPage.DisplayAlert("", ex.Message, "ok");
-
-                        });
-                    }
+                    // remote dropped / stream disposed – not fatal, just end the loop
+                    Debug.WriteLine(ex);
                 }
+                // read returned 0 (graceful close) or threw (dropped) → connection is gone
+                SafeInvoke(onClosed);
             }
-            public void SendMessage(string message)
+
+            // Returns false when the send fails (broken connection), so the caller can react.
+            public bool SendMessage(string message)
             {
                 try
                 {
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        byte[] data = Encoding.UTF8.GetBytes(message);
-                        Stream?.Write(data, 0, data.Length);
+                    if (string.IsNullOrEmpty(message)) return true;
+                    if (Stream == null) return false;
 
-                        G.ObservableCollection_Messages.Add(Vuvu.AddTo(message, "Sent"));
-
-                    }
+                    byte[] data = Encoding.UTF8.GetBytes(message);
+                    Stream.Write(data, 0, data.Length);
+                    G.ObservableCollection_Messages.Add(Vuvu.AddTo(message, "Sent"));
+                    return true;
                 }
                 catch (Exception ex)
                 {
-                    if (Tcp_client != null)
-                    {
-
-                        Application.Current?.Dispatcher.Dispatch(async () =>
-                        {
-                            var currentPage = Application.Current?.Windows[0].Page;
-                            if (currentPage != null)
-                            {
-                                await currentPage.DisplayAlert("", ex.Message, "ok");
-                            }
-                        });
-                    }
+                    Debug.WriteLine(ex);
+                    return false;
                 }
+            }
+
+            static void SafeInvoke(Action? a)
+            {
+                try { a?.Invoke(); } catch (Exception ex) { Debug.WriteLine(ex); }
             }
             public void CloseConnection()
             {
-                Stream?.Close();
-                Tcp_client?.Close();
-                Tcp_server?.Stop();
+                try { Stream?.Close(); } catch (Exception ex) { Debug.WriteLine(ex); }
+                try { Tcp_client?.Close(); } catch (Exception ex) { Debug.WriteLine(ex); }
+                try { Tcp_server?.Stop(); } catch (Exception ex) { Debug.WriteLine(ex); }
+                Stream = null;
                 G.Initiate_server = null;
             }
 

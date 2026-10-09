@@ -40,52 +40,67 @@ namespace gangiChi
             }
         }
 
-        // Enter the host "waiting for a device" state: show the Cancel button and
-        // begin periodically checking for an open connection.
-        void StartHosting()
+        // Begin watching the live connection; the status area is refreshed every 2s.
+        // Used by both the host and the client.
+        void StartConnectionWatcher()
         {
-            _isHosting = true;
-            cancelHosting_Click.IsVisible = true;
-            connectionList.IsVisible = true;
-
             _connectionWatcher?.Stop();
             _connectionWatcher = Dispatcher.CreateTimer();
             _connectionWatcher.Interval = TimeSpan.FromSeconds(2);
-            _connectionWatcher.Tick += (_, _) => RefreshConnectionList();
+            _connectionWatcher.Tick += (_, _) => RefreshConnectionUi();
             _connectionWatcher.Start();
-            RefreshConnectionList();
+            RefreshConnectionUi();
         }
 
-        // Leave the host state and reset the form.
-        void StopHosting()
+        // Periodic check: decide what the status area shows from the live connection.
+        void RefreshConnectionUi()
         {
-            _isHosting = false;
-            _connectionWatcher?.Stop();
-            _connectionWatcher = null;
-            cancelHosting_Click.IsVisible = false;
-            connectionList.IsVisible = false;
-            connectionList.Clear();
-            IsLoader(false, [creatingConnection_Click, client_click_btn]);
-        }
-
-        // Periodic check: show the current connection (if any) with a close (X) control,
-        // otherwise keep showing the "waiting" state.
-        void RefreshConnectionList()
-        {
-            if (!_isHosting) return;
-
-            var server = G.Initiate_server;
-            bool hasOpenConnection = server?.Stream != null;
-
-            connectionList.Clear();
-            if (!hasOpenConnection) return;
-
-            var row = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
-            var label = new Label
+            try
             {
-                Text = "Connected",
-                VerticalTextAlignment = TextAlignment.Center
-            };
+                var server = G.Initiate_server;
+                bool connected = server?.Stream != null;
+
+                if (connected)
+                {
+                    // An open connection exists → offer "Continue to messages" and a close (X).
+                    connectionStatus.IsVisible = true;
+                    loader.IsVisible = loader.IsRunning = false;
+                    loaderText.Text = "Connected";
+                    cancelHosting_Click.IsVisible = false;
+                    continueToMessages_Click.IsVisible = true;
+                    creatingConnection_Click.IsVisible = false;
+                    client_click_btn.IsVisible = false;
+
+                    connectionList.IsVisible = true;
+                    connectionList.Clear();
+                    connectionList.Add(BuildConnectionRow(server));
+                    return;
+                }
+
+                if (_isHosting)
+                {
+                    // Still waiting for a device → keep the loader and the Cancel button.
+                    connectionStatus.IsVisible = true;
+                    loader.IsVisible = loader.IsRunning = true;
+                    cancelHosting_Click.IsVisible = true;
+                    continueToMessages_Click.IsVisible = false;
+                    creatingConnection_Click.IsVisible = false;
+                    client_click_btn.IsVisible = false;
+                    connectionList.IsVisible = false;
+                    connectionList.Clear();
+                    return;
+                }
+
+                // No connection and not hosting → back to the home form.
+                ResetConnectionUi();
+            }
+            catch (Exception ex) { Debug.WriteLine(ex); }
+        }
+
+        View BuildConnectionRow(G.TrepCserver? server)
+        {
+            var row = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
+            row.Add(new Label { Text = "Connected", VerticalTextAlignment = TextAlignment.Center }, 0, 0);
             var close = new Button
             {
                 Text = "✕",
@@ -96,20 +111,55 @@ namespace gangiChi
             };
             close.Clicked += (_, _) =>
             {
-                server?.CloseConnection();
-                RefreshConnectionList();
+                try { server?.CloseConnection(); } catch (Exception ex) { Debug.WriteLine(ex); }
+                RefreshConnectionUi();
             };
-            row.Add(label, 0, 0);
             row.Add(close, 1, 0);
-            connectionList.Add(row);
+            return row;
         }
 
-        // Cancel the host "waiting for a device" state.
+        // Stop watching and restore the home form.
+        void ResetConnectionUi()
+        {
+            _isHosting = false;
+            _connectionWatcher?.Stop();
+            _connectionWatcher = null;
+            connectionStatus.IsVisible = false;
+            loader.IsVisible = loader.IsRunning = false;
+            cancelHosting_Click.IsVisible = false;
+            continueToMessages_Click.IsVisible = false;
+            connectionList.IsVisible = false;
+            connectionList.Clear();
+            creatingConnection_Click.IsVisible = true;
+            client_click_btn.IsVisible = true;
+        }
+
+        // Cancel hosting / close an open connection and go back to the home form.
         private void CancelHosting_Click(object sender, EventArgs e)
         {
-            // Stopping the listener makes the blocking AcceptTcpClient throw, ending the accept loop.
-            G.Initiate_server?.CloseConnection();
-            StopHosting();
+            try { G.Initiate_server?.CloseConnection(); } catch (Exception ex) { Debug.WriteLine(ex); }
+            ResetConnectionUi();
+        }
+
+        // Both sides: move to the chat once a connection exists.
+        private async void ContinueToMessages_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (G.Initiate_server?.Stream == null)
+                {
+                    await DisplayAlert("Not connected", "The connection is no longer available.", "OK");
+                    ResetConnectionUi();
+                    return;
+                }
+                _connectionWatcher?.Stop();
+                G.ObservableCollection_Messages = [];
+                await Navigation.PushAsync(new Messages());
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("", ex.Message, "OK");
+            }
         }
 
 
@@ -130,6 +180,16 @@ namespace gangiChi
 
             this.Title = "gangiChi";
             Initt();
+        }
+
+        // Returning here (e.g. after a disconnect popped us home) → sync the UI to the live connection.
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            if (G.Initiate_server?.Stream != null)
+                StartConnectionWatcher();
+            else
+                ResetConnectionUi();
         }
         private async void Server_Connect_Click(object sender, EventArgs e)
         {
@@ -165,7 +225,8 @@ namespace gangiChi
                 {
                     // loading .....
                     IsLoader(true, [creatingConnection_Click, client_click_btn], "Waiting for a device at " + ServerLocalIP + ":" + serverPort);
-                    StartHosting();
+                    _isHosting = true;
+                    StartConnectionWatcher();
                 });
                 while (true)
                 {
@@ -194,37 +255,45 @@ namespace gangiChi
 
                     if (G.Initiate_server != null)
                     {
-                        string desktopScreenShotFolderN = DesktopScreenShotFolder();
-                        string fileServerUrl = Start_FileServer(desktopScreenShotFolderN); 
+                        try
+                        {
+                            string desktopScreenShotFolderN = DesktopScreenShotFolder();
+                            string fileServerUrl = Start_FileServer(desktopScreenShotFolderN);
 
-                        G.Initiate_server.Stream = Tcp_client?.GetStream();
-                        Application.Current?.Dispatcher.Dispatch(async () => {
-                            this.Title += " s:" + fileServerUrl;
+                            G.Initiate_server.Stream = Tcp_client?.GetStream();
+                            Application.Current?.Dispatcher.Dispatch(() => {
+                                try
+                                {
+                                    this.Title += " s:" + fileServerUrl;
 
-                            //if windows
+                                    //if windows
 #if WINDOWS
-                            try {
-                                Keyboard_Hook.Unhook();
-                            } catch (Exception) {
-                                Keyboard_Hook=new();
-                            }
-                            Keyboard_Hook.Hook((t, j) =>
-                            {
-                                if (t == 0x0100 && j == 90){//key pressed && key is tab 
-                                    Application.Current?.Dispatcher.Dispatch(() => {
-                                        string sc_dir =  B.TakeScreenshotAsync(desktopScreenShotFolderN);    
-                                        G.Initiate_server?.SendMessage(fileServerUrl + sc_dir);  
-                                    });
-                                }
-                             });
+                                    try {
+                                        Keyboard_Hook.Unhook();
+                                    } catch (Exception) {
+                                        Keyboard_Hook=new();
+                                    }
+                                    Keyboard_Hook.Hook((t, j) =>
+                                    {
+                                        if (t == 0x0100 && j == 90){//key pressed && key is tab
+                                            Application.Current?.Dispatcher.Dispatch(() => {
+                                                string sc_dir =  B.TakeScreenshotAsync(desktopScreenShotFolderN);
+                                                G.Initiate_server?.SendMessage(fileServerUrl + sc_dir);
+                                            });
+                                        }
+                                     });
 #endif
-                            //navigate to messages 
-                            if (Navigation.NavigationStack.Count > 0) {
-                                G.ObservableCollection_Messages = [];
-                                await Navigation.PopToRootAsync();
-                            }
-                            await Navigation.PushAsync(new Messages());
-                        });
+                                    // a device connected → the watcher now shows "Continue to messages"
+                                    RefreshConnectionUi();
+                                }
+                                catch (Exception ex) { Debug.WriteLine(ex); }
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex);
+                            Tcp_client?.Close();
+                        }
                     }
                 }
             });
@@ -259,16 +328,17 @@ namespace gangiChi
 
 
                 G.Initiate_server.Stream = G.Initiate_server.Tcp_client.GetStream();
-                await Navigation.PushAsync(new Messages());
 
-
+                // connected → show "Continue to messages" (same as the host side)
+                _isHosting = false;
+                StartConnectionWatcher();
             }
             catch (Exception ex)
             {
-                await DisplayAlert("", "Keep trying till server comes online.\nError connecting to server: " + ex.Message, "ok");
+                try { G.Initiate_server?.CloseConnection(); } catch (Exception c) { Debug.WriteLine(c); }
+                ResetConnectionUi();
+                await DisplayAlert("", "Keep trying till server comes online.\nError connecting to server: " + ex.Message, "OK");
             }
-            IsLoader(false, [creatingConnection_Click, client_click_btn], "waiting for client on\n");
-
         }
 
         static private string Start_FileServer(string folder)

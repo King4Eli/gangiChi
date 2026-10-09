@@ -56,6 +56,10 @@
                 <!-- Open / pending connections for this host, refreshed periodically -->
                 <VerticalStackLayout x:Name="connectionList" Spacing="6" IsVisible="False" Margin="0,6,0,0" />
 
+                <!-- Shown on both host and client once a connection exists -->
+                <Button x:Name="continueToMessages_Click" Text="Continue to messages" IsVisible="False"
+                        Clicked="ContinueToMessages_Click" HorizontalOptions="Center" />
+
                 <!-- Cancel the host's "waiting for a device" state -->
                 <Button x:Name="cancelHosting_Click" Text="Cancel" IsVisible="False"
                         Clicked="CancelHosting_Click" HorizontalOptions="Center"

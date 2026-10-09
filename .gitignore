@@ -1,6 +1,51 @@
+# Visual Studio
+.vs/
+.vscode/
+*.suo
+*.user
+*.rsuser
+*.sln.docstates
 
-/.vs
-/gangiChi/obj/Debug
-/gangiChi/obj/Release
-/gangiChi/bin/Release
-/gangiChi/obj/publish
+# .NET / MAUI build outputs
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+**/publish/
+**/.cache/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# MAUI / Android
+*.apk
+*.aab
+*.apks
+*.keystore
+*.jks
+
+# Windows packaging
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.appxupload
+*.msixupload
+*.appinstaller
+*.pfx
+*.cer
+AppPackages/
+BundleArtifacts/
+
+# Publish and export artifacts
+export/
+artifacts/
+TestResults/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak

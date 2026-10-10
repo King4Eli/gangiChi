@@ -20,14 +20,14 @@
 packages/
 
 # MAUI / Android
-*.apk
+# *.apk
 *.aab
 *.apks
 *.keystore
 *.jks
 
 # Windows packaging
-*.msix
+# *.msix
 *.msixbundle
 *.appx
 *.appxbundle
@@ -35,7 +35,7 @@ packages/
 *.msixupload
 *.appinstaller
 *.pfx
-*.cer
+# .cer
 AppPackages/
 BundleArtifacts/
 
